@@ -2,12 +2,12 @@ Name: service.status
 ListenOn: 127.0.0.1:20670
 Etcd:
   Hosts:
-    - 127.0.0.1:2379
+    - 43.160.199.241:2379
   Key: service.status
 Log:
   Mode: file
   Path: ../logs/status
   Level: debug
 Status:
-  - Host: 127.0.0.1:6379
+  - Host: 43.160.199.241:6379
 StatusExpire: 90

@@ -2,7 +2,7 @@ Name: service.biz_service
 ListenOn: 127.0.0.1:20020
 Etcd:
   Hosts:
-    - 127.0.0.1:2379
+    - 43.160.199.241:2379
   Key: service.biz_service
 Log:
   Mode: file
@@ -13,7 +13,7 @@ Cache:
 KV:
   - Host: localhost:6379
 Mysql:
-  DSN: root:@tcp(127.0.0.1:3306)/teamgram?charset=utf8mb4&parseTime=true
+  DSN: root:my_root_secret@tcp(43.160.199.241:3306)/teamgram?charset=utf8mb4&parseTime=true
   Active: 64
   Idle: 64
   IdleTimeout: 4h
@@ -21,10 +21,10 @@ Mysql:
 MediaClient:
   Etcd:
     Hosts:
-      - 127.0.0.1:2379
+      - 43.160.199.241:2379
     Key: service.media
 IdgenClient:
   Etcd:
     Hosts:
-      - 127.0.0.1:2379
+      - 43.160.199.241:2379
     Key: service.idgen

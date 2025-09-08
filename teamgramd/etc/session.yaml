@@ -2,35 +2,35 @@ Name: interface.session
 ListenOn: 127.0.0.1:20120
 Etcd:
   Hosts:
-    - 127.0.0.1:2379
+    - 43.160.199.241:2379
   Key: interface.session
 Log:
   Mode: file
   Path: ../logs/session
   Level: debug
 Cache:
-  - Host: 127.0.0.1:6379
+  - Host: 43.160.199.241:6379
 AuthSession:
   Etcd:
     Hosts:
-      - 127.0.0.1:2379
+      - 43.160.199.241:2379
     Key: service.authsession
 StatusClient:
   Etcd:
     Hosts:
-      - 127.0.0.1:2379
+      - 43.160.199.241:2379
     Key: service.status
 GatewayClient:
   Etcd:
     Hosts:
-      - 127.0.0.1:2379
+      - 43.160.199.241:2379
     Key: interface.gateway
 
 BFFProxyClients:
   Clients:
     - Etcd:
         Hosts:
-          - 127.0.0.1:2379
+          - 43.160.199.241:2379
         Key: bff.bff
       Timeout: 0
   IDMap:
@@ -69,7 +69,7 @@ BFFProxyClients:
     #"/mtproto.RPCGames": "bff.bff"
     #"/mtproto.RPCGroupCalls": "bff.bff"
     #"/mtproto.RPCImportedChats": "bff.bff"
-    #"/mtproto.RPCLangpack": "bff.bff"
+    # "/mtproto.RPCLangpack": "bff.bff"
     "/mtproto.RPCAutoDownload": "bff.bff"
     #"/mtproto.RPCMessageThreads": "bff.bff"
     #"/mtproto.RPCReactions": "bff.bff"

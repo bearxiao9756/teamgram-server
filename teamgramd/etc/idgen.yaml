@@ -1,8 +1,8 @@
 Name: service.idgen
-ListenOn: 127.0.0.1:20660
+ListenOn: 43.160.199.241:20660
 Etcd:
   Hosts:
-    - 127.0.0.1:2379
+    - 43.160.199.241:2379
   Key: service.idgen
 Log:
   Mode: file
@@ -10,4 +10,4 @@ Log:
   Level: debug
 NodeId: 1
 SeqIDGen:
-  - Host: 127.0.0.1:6379
+  - Host: 43.160.199.241:6379
