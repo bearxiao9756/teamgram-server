@@ -103,6 +103,7 @@ const (
 
 This code can be used to log in to your %s account. We never ask it for anything else.
 
+查理IM 在这里
 If you didn't request this code by trying to log in on another device, simply ignore this message.`
 )
 const (
