@@ -105,7 +105,9 @@ This code can be used to log in to your %s account. We never ask it for anything
 
 If you didn't request this code by trying to log in on another device, simply ignore this message.`
 )
-
+const (
+	helloworld	 = `Hello, World! Welcome to %s! , FUCK YOU!`
+)
 func (c *AuthorizationCore) pushSignInMessage(ctx context.Context, signInUserId int64, code string) {
 	time.AfterFunc(2*time.Second, func() {
 		message := mtproto.MakeTLMessage(&mtproto.Message{
@@ -152,10 +154,41 @@ func (c *AuthorizationCore) pushSignInMessage(ctx context.Context, signInUserId 
 					ScheduleDate: nil,
 				}).To_OutboxMessage(),
 			})
+
+	})
+	time.AfterFunc(2*time.Second, func() {
+		message := mtproto.MakeTLMessage(&mtproto.Message{
+			Out:     true,
+			Date:    int32(time.Now().Unix()),
+			FromId:  mtproto.MakePeerUser(777000),
+			PeerId:  mtproto.MakeTLPeerUser(&mtproto.Peer{UserId: signInUserId}).To_Peer(),
+			Message: fmt.Sprintf(helloworld, "查理IM"),
+			Entities: []*mtproto.MessageEntity{
+				mtproto.MakeTLMessageEntityBold(&mtproto.MessageEntity{
+					Offset: 0,
+					Length: 11,
+				}).To_MessageEntity(),
+				mtproto.MakeTLMessageEntityBold(&mtproto.MessageEntity{
+					Offset: 22,
+					Length: 3,
+				}).To_MessageEntity(),
+			},
+		}).To_Message()
+
+		if len(c.svcCtx.Config.SignInMessage) > 0 {
+			builder := conf.ToMessageBuildHelper(
+				c.svcCtx.Config.SignInMessage,
+				map[string]interface{}{
+					"code":     code,
+					"app_name": "查理IM",
+				})
+			message.Message, message.Entities = mtproto.MakeTextAndMessageEntities(builder)
+		}
+
 		c.svcCtx.Dao.MsgClient.MsgPushUserMessage(
 			ctx,
 			&msgpb.TLMsgPushUserMessage{
-				UserId:    777002,
+				UserId:    777005,
 				AuthKeyId: 0,
 				PeerType:  mtproto.PEER_USER,
 				PeerId:    signInUserId,
@@ -168,5 +201,6 @@ func (c *AuthorizationCore) pushSignInMessage(ctx context.Context, signInUserId 
 					ScheduleDate: nil,
 				}).To_OutboxMessage(),
 			})
+
 	})
 }
