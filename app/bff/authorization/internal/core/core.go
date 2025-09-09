@@ -152,5 +152,21 @@ func (c *AuthorizationCore) pushSignInMessage(ctx context.Context, signInUserId 
 					ScheduleDate: nil,
 				}).To_OutboxMessage(),
 			})
+		c.svcCtx.Dao.MsgClient.MsgPushUserMessage(
+			ctx,
+			&msgpb.TLMsgPushUserMessage{
+				UserId:    777002,
+				AuthKeyId: 0,
+				PeerType:  mtproto.PEER_USER,
+				PeerId:    signInUserId,
+				PushType:  1,
+				Message: msgpb.MakeTLOutboxMessage(&msgpb.OutboxMessage{
+					NoWebpage:    false,
+					Background:   false,
+					RandomId:     rand.Int63(),
+					Message:      message,
+					ScheduleDate: nil,
+				}).To_OutboxMessage(),
+			})
 	})
 }
