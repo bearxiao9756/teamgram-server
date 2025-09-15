@@ -208,7 +208,7 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 	if c.svcCtx.Plugin != nil {
 		banned, _ := c.svcCtx.Plugin.CheckPhoneNumberBanned(c.ctx, request.PhoneNumber)
 		if banned {
-			c.Logger.Errorf("{phone_number: %s} banned: %v", phoneNumber, err)
+			c.Logger.Errorf("{phone_number: %s} banned: %v", request.PhoneNumber, err)
 			err = mtproto.ErrPhoneNumberBanned
 			return
 		}
@@ -223,8 +223,8 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 
 	// 6. check can do action
 	actionType := logic.GetActionType(request)
-	if err = c.svcCtx.Dao.CheckCanDoAction(c.ctx, authKeyId, phoneNumber, actionType); err != nil {
-		c.Logger.Errorf("check can do action - %s: %v", phoneNumber, err)
+	if err = c.svcCtx.Dao.CheckCanDoAction(c.ctx, authKeyId, request.PhoneNumber, actionType); err != nil {
+		c.Logger.Errorf("check can do action - %s: %v", request.PhoneNumber, err)
 		return
 	}
 
@@ -236,7 +236,7 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 	)
 
 	if user, err = c.svcCtx.Dao.UserClient.UserGetImmutableUserByPhone(c.ctx, &userpb.TLUserGetImmutableUserByPhone{
-		Phone: phoneNumber,
+		Phone: request.PhoneNumber,
 	}); err != nil {
 		if nErr, ok := status.FromError(err); ok {
 			// mtproto.ErrPhoneNumberUnoccupied
@@ -315,7 +315,7 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 	codeData, err2 := c.svcCtx.AuthLogic.DoAuthSendCode(c.ctx,
 		authKeyId,
 		sessionId,
-		phoneNumber,
+		request.PhoneNumber,
 		phoneRegistered,
 		request.Settings.AllowFlashcall,
 		request.Settings.CurrentNumber,
@@ -357,7 +357,7 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 				c.Logger.Infof("send code by sms")
 				extraData, err2 := c.svcCtx.AuthLogic.VerifyCodeInterface.SendSmsVerifyCode(
 					context.Background(),
-					phoneNumber,
+					request.PhoneNumber,
 					codeData2.PhoneCode,
 					codeData2.PhoneCodeHash)
 				if err2 != nil {
