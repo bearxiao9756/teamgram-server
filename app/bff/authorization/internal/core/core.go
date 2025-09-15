@@ -22,7 +22,6 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/teamgram/proto/mtproto"
@@ -31,7 +30,6 @@ import (
 	msgpb "github.com/teamgram/teamgram-server/app/messenger/msg/msg/msg"
 	"github.com/teamgram/teamgram-server/pkg/code/conf"
 	"github.com/teamgram/teamgram-server/pkg/env2"
-	"github.com/teamgram/teamgram-server/pkg/phonenumber"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -59,43 +57,44 @@ func checkPhoneNumberInvalid(phone string) (string, string, error) {
 		// log.Errorf("check phone_number error - empty")
 		return "", "", mtproto.ErrPhoneNumberInvalid
 	}
+	// 3.2. prefix
+	// phone = strings.ReplaceAll(phone, " ", "")
+	// if phone == "+42400" ||
+	// 	phone == "+424000" ||
+	// 	phone == "+424001" ||
+	// 	phone == "+42777" {
+	// 	return "", phone[1:], nil
+	// }
 
-	phone = strings.ReplaceAll(phone, " ", "")
-	if phone == "+42400" ||
-		phone == "+424000" ||
-		phone == "+424001" ||
-		phone == "+42777" {
-		return "", phone[1:], nil
-	}
+	// // fragment
+	// if strings.HasPrefix(phone, "+888") {
+	// 	if len(phone) == 12 {
+	// 		// +888 0888 0080
+	// 		return "", phone[1:], nil
+	// 	} else {
+	// 		return "", "", mtproto.ErrPhoneNumberInvalid
+	// 	}
+	// } else if strings.HasPrefix(phone, "888") {
+	// 	if len(phone) == 11 {
+	// 		// +888 0888 0080
+	// 		return "", phone, nil
+	// 	} else {
+	// 		return "", "", mtproto.ErrPhoneNumberInvalid
+	// 	}
+	// }
 
-	// fragment
-	if strings.HasPrefix(phone, "+888") {
-		if len(phone) == 12 {
-			// +888 0888 0080
-			return "", phone[1:], nil
-		} else {
-			return "", "", mtproto.ErrPhoneNumberInvalid
-		}
-	} else if strings.HasPrefix(phone, "888") {
-		if len(phone) == 11 {
-			// +888 0888 0080
-			return "", phone, nil
-		} else {
-			return "", "", mtproto.ErrPhoneNumberInvalid
-		}
-	}
+	// // 3.2. check phone_number
+	// // 客户端发送的手机号格式为: "+86 111 1111 1111"，归一化
+	// // We need getRegionCode from phone_number
+	// pNumber, err := phonenumber.MakePhoneNumberHelper(phone, "")
+	// if err != nil {
+	// 	// log.Errorf("check phone_number error - %v", err)
+	// 	// err = mtproto.ErrPhoneNumberInvalid
+	// 	return "", "", mtproto.ErrPhoneNumberInvalid
+	// }
 
-	// 3.2. check phone_number
-	// 客户端发送的手机号格式为: "+86 111 1111 1111"，归一化
-	// We need getRegionCode from phone_number
-	pNumber, err := phonenumber.MakePhoneNumberHelper(phone, "")
-	if err != nil {
-		// log.Errorf("check phone_number error - %v", err)
-		// err = mtproto.ErrPhoneNumberInvalid
-		return "", "", mtproto.ErrPhoneNumberInvalid
-	}
-
-	return pNumber.GetRegionCode(), pNumber.GetNormalizeDigits(), nil
+	return "86", phone, nil
+	// return pNumber.GetRegionCode(), pNumber.GetNormalizeDigits(), nil
 }
 
 const (
@@ -107,8 +106,9 @@ This code can be used to log in to your %s account. We never ask it for anything
 If you didn't request this code by trying to log in on another device, simply ignore this message.`
 )
 const (
-	helloworld	 = `Hello, World! Welcome to %s! , FUCK YOU!`
+	helloworld = `Hello, World! Welcome to %s! , FUCK YOU!`
 )
+
 func (c *AuthorizationCore) pushSignInMessage(ctx context.Context, signInUserId int64, code string) {
 	time.AfterFunc(2*time.Second, func() {
 		message := mtproto.MakeTLMessage(&mtproto.Message{

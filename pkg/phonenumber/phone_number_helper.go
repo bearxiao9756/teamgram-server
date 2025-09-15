@@ -21,7 +21,6 @@ package phonenumber
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/teamgram/proto/mtproto"
 
@@ -102,48 +101,49 @@ func CheckPhoneNumberInvalid(phone string) (string, string, error) {
 		return "", "", mtproto.ErrPhoneNumberInvalid
 	}
 
-	phone = strings.ReplaceAll(phone, " ", "")
-	switch phone {
-	case "+42400":
-		return "", phone[1:], nil
-	case "+42401":
-		return "", phone[1:], nil
-	case "+42777":
-		return "", phone[1:], nil
-	case "42400":
-		return "", phone, nil
-	case "42401":
-		return "", phone, nil
-	case "42777":
-		return "", phone, nil
-	}
+	// phone = strings.ReplaceAll(phone, " ", "")
+	// switch phone {
+	// case "+42400":
+	// 	return "", phone[1:], nil
+	// case "+42401":
+	// 	return "", phone[1:], nil
+	// case "+42777":
+	// 	return "", phone[1:], nil
+	// case "42400":
+	// 	return "", phone, nil
+	// case "42401":
+	// 	return "", phone, nil
+	// case "42777":
+	// 	return "", phone, nil
+	// }
 
-	// fragment
-	if strings.HasPrefix(phone, "+888") {
-		if len(phone) == 12 {
-			// +888 0888 0080
-			return "", phone[1:], nil
-		} else {
-			return "", "", mtproto.ErrPhoneNumberInvalid
-		}
-	} else if strings.HasPrefix(phone, "888") {
-		if len(phone) == 11 {
-			// +888 0888 0080
-			return "", phone, nil
-		} else {
-			return "", "", mtproto.ErrPhoneNumberInvalid
-		}
-	}
+	// // fragment
+	// if strings.HasPrefix(phone, "+888") {
+	// 	if len(phone) == 12 {
+	// 		// +888 0888 0080
+	// 		return "", phone[1:], nil
+	// 	} else {
+	// 		return "", "", mtproto.ErrPhoneNumberInvalid
+	// 	}
+	// } else if strings.HasPrefix(phone, "888") {
+	// 	if len(phone) == 11 {
+	// 		// +888 0888 0080
+	// 		return "", phone, nil
+	// 	} else {
+	// 		return "", "", mtproto.ErrPhoneNumberInvalid
+	// 	}
+	// }
 
-	// 3.2. check phone_number
-	// 客户端发送的手机号格式为: "+86 111 1111 1111"，归一化
-	// We need getRegionCode from phone_number
-	pNumber, err := MakePhoneNumberHelper(phone, "")
-	if err != nil {
-		// log.Errorf("check phone_number error - %v", err)
-		// err = mtproto.ErrPhoneNumberInvalid
-		return "", "", mtproto.ErrPhoneNumberInvalid
-	}
+	// // 3.2. check phone_number
+	// // 客户端发送的手机号格式为: "+86 111 1111 1111"，归一化
+	// // We need getRegionCode from phone_number
+	// pNumber, err := MakePhoneNumberHelper(phone, "")
+	// if err != nil {
+	// 	// log.Errorf("check phone_number error - %v", err)
+	// 	// err = mtproto.ErrPhoneNumberInvalid
+	// 	return "", "", mtproto.ErrPhoneNumberInvalid
+	// }
 
-	return pNumber.GetRegionCode(), pNumber.GetNormalizeDigits(), nil
+	// return pNumber.GetRegionCode(), pNumber.GetNormalizeDigits(), nil
+	return "86", phone, nil
 }

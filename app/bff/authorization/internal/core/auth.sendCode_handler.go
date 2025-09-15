@@ -162,12 +162,12 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 	// 3. check number 注释掉，交给logic处理
 
 	// client phone number format: "+86 111 1111 1111"
-	// _, phoneNumber, err := checkPhoneNumberInvalid(request.PhoneNumber)
-	// if err != nil {
-	// 	c.Logger.Errorf("check phone_number(%s) error - %v", request.PhoneNumber, err)
-	// 	err = mtproto.ErrPhoneNumberInvalid
-	// 	return
-	// }
+	_, phoneNumber, err := checkPhoneNumberInvalid(request.PhoneNumber)
+	if err != nil {
+		c.Logger.Errorf("check phone_number(%s) error - %v", request.PhoneNumber, err)
+		err = mtproto.ErrPhoneNumberInvalid
+		return
+	}
 
 	// 4. MIGRATE datacenter
 	// 	303	NETWORK_MIGRATE_X	重复查询到数据中心X
@@ -206,7 +206,7 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 
 	// 5. banned phone number
 	if c.svcCtx.Plugin != nil {
-		banned, _ := c.svcCtx.Plugin.CheckPhoneNumberBanned(c.ctx, request.PhoneNumber)
+		banned, _ := c.svcCtx.Plugin.CheckPhoneNumberBanned(c.ctx, phoneNumber)
 		if banned {
 			c.Logger.Errorf("{phone_number: %s} banned: %v", request.PhoneNumber, err)
 			err = mtproto.ErrPhoneNumberBanned
@@ -223,7 +223,7 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 
 	// 6. check can do action
 	actionType := logic.GetActionType(request)
-	if err = c.svcCtx.Dao.CheckCanDoAction(c.ctx, authKeyId, request.PhoneNumber, actionType); err != nil {
+	if err = c.svcCtx.Dao.CheckCanDoAction(c.ctx, authKeyId, phoneNumber, actionType); err != nil {
 		c.Logger.Errorf("check can do action - %s: %v", request.PhoneNumber, err)
 		return
 	}
