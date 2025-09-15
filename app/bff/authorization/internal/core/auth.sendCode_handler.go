@@ -29,6 +29,7 @@ import (
 	"github.com/teamgram/teamgram-server/app/service/authsession/authsession"
 	userpb "github.com/teamgram/teamgram-server/app/service/biz/user/user"
 	statuspb "github.com/teamgram/teamgram-server/app/service/status/status"
+	"github.com/zeromicro/go-zero/core/logx"
 
 	"google.golang.org/grpc/status"
 )
@@ -140,7 +141,7 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 		c.Logger.Errorf("invalid api: {api_id: %d, api_hash: %s}", request.ApiId, request.ApiHash)
 		return
 	}
-
+	logx.Infof("phone_number: %s", request.PhoneNumber)
 	// 2. check allow_flashcall and current_number
 	// if allow_flashcall is true then current_number is true
 	/*
@@ -158,15 +159,15 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 		}
 	*/
 
-	// 3. check number
+	// 3. check number 注释掉，交给logic处理
 
 	// client phone number format: "+86 111 1111 1111"
-	_, phoneNumber, err := checkPhoneNumberInvalid(request.PhoneNumber)
-	if err != nil {
-		c.Logger.Errorf("check phone_number(%s) error - %v", request.PhoneNumber, err)
-		err = mtproto.ErrPhoneNumberInvalid
-		return
-	}
+	// _, phoneNumber, err := checkPhoneNumberInvalid(request.PhoneNumber)
+	// if err != nil {
+	// 	c.Logger.Errorf("check phone_number(%s) error - %v", request.PhoneNumber, err)
+	// 	err = mtproto.ErrPhoneNumberInvalid
+	// 	return
+	// }
 
 	// 4. MIGRATE datacenter
 	// 	303	NETWORK_MIGRATE_X	重复查询到数据中心X
@@ -205,7 +206,7 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 
 	// 5. banned phone number
 	if c.svcCtx.Plugin != nil {
-		banned, _ := c.svcCtx.Plugin.CheckPhoneNumberBanned(c.ctx, phoneNumber)
+		banned, _ := c.svcCtx.Plugin.CheckPhoneNumberBanned(c.ctx, request.PhoneNumber)
 		if banned {
 			c.Logger.Errorf("{phone_number: %s} banned: %v", phoneNumber, err)
 			err = mtproto.ErrPhoneNumberBanned
