@@ -86,6 +86,9 @@ func (c *AuthorizationCore) AuthSignIn(in *mtproto.TLAuthSignIn) (*mtproto.Auth_
 		return nil, err
 	}
 
+	c.Logger.Errorf("auth.signIn - phone_number: %s, code: %s, code_hash: %s", phoneNumber, phoneCode, phoneCodeHash)
+
+	// 7. do signIn
 	codeData, err2 := c.svcCtx.AuthLogic.DoAuthSignIn(c.ctx,
 		c.MD.PermAuthKeyId,
 		phoneNumber,
@@ -116,6 +119,8 @@ func (c *AuthorizationCore) AuthSignIn(in *mtproto.TLAuthSignIn) (*mtproto.Auth_
 
 	// signIn successful, check phoneRegistered.
 	if !codeData.PhoneNumberRegistered {
+		c.Logger.Errorf("auth.signIn - not registered, next step auth.signIn")
+
 		if c.MD.Layer >= 104 {
 			//  not register, next step: auth.singIn
 			return mtproto.MakeTLAuthAuthorizationSignUpRequired(&mtproto.Auth_Authorization{
@@ -123,6 +128,7 @@ func (c *AuthorizationCore) AuthSignIn(in *mtproto.TLAuthSignIn) (*mtproto.Auth_
 				TermsOfService: nil,
 			}).To_Auth_Authorization(), nil
 		} else {
+			c.Logger.Errorf("auth.signIn - not registered, next step auth.signIn")
 			c.Logger.Errorf("auth.signIn - not registered, next step auth.signIn, %v", err)
 			err = mtproto.ErrPhoneNumberUnoccupied
 			return nil, err

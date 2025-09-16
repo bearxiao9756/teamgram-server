@@ -173,6 +173,8 @@ func (m *AuthLogic) DoAuthSignIn(ctx context.Context,
 	phoneCode,
 	phoneCodeHash string,
 	cb func(codeData *model.PhoneCodeTransaction) error) (codeData *model.PhoneCodeTransaction, err error) {
+
+	logx.WithContext(ctx).Infof("auth.signIn DoAuthSignIn : %s, code: %s, code_hash: %s", phoneNumber, phoneCode, phoneCodeHash)
 	if codeData, err = m.Dao.GetPhoneCode(ctx, authKeyId, phoneNumber, phoneCodeHash); err != nil {
 		return
 	}
