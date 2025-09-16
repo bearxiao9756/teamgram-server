@@ -138,6 +138,26 @@ services:
     entrypoint: /minio_init.sh
     networks:
       - teamgram_net
+  
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    ports:
+      - "16686:16686" # Jaeger UI port for viewing traces
+      - "14268:14268" # Jaeger Collector port
+    restart: always
+    networks:
+      - teamgram_net
+      
+  # zipkin:
+  #   image: openzipkin/zipkin
+  #   container_name: zipkin
+  #   ports:
+  #     - "9411:9411" # Zipkin 的网页界面和收集端口
+  #   restart: always
+  #   networks:
+  #     - teamgram_net
+
 
 networks:
   teamgram_net:

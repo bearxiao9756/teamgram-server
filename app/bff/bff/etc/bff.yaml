@@ -58,3 +58,17 @@ SyncClient:
   Topic:   "Sync-T"
   Brokers:
     - 127.0.0.1:9092
+
+Telemetry:
+  Name: bff.bff # 你的服务名
+  Endpoint: http://jaeger:14268/api/traces # Jaeger 收集器地址
+  Sampler:
+    SamplerType: const # 固定采样，100% 采样
+    SamplerParam: 1
+
+# Telemetry:
+#   Name: bff.bff
+#   Endpoint: http://zipkin:9411/api/v2/spans # Zipkin 收集器地址
+#   Sampler:
+#     SamplerType: const
+#     SamplerParam: 1
