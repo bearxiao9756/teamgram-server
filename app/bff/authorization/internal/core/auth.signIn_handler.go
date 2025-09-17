@@ -72,7 +72,7 @@ func (c *AuthorizationCore) AuthSignIn(in *mtproto.TLAuthSignIn) (*mtproto.Auth_
 
 	// 3. check number
 	// client phone number format: "+86 111 1111 1111"
-	_, phoneNumber, err := checkPhoneNumberInvalid(in.PhoneNumber)
+	_, phoneNumber, err, p, j := checkPhoneNumberInvalid(in.PhoneNumber)
 	if err != nil {
 		c.Logger.Errorf("check phone_number(%s) error - %v", in.PhoneNumber, err)
 		err = mtproto.ErrPhoneNumberInvalid
@@ -81,7 +81,7 @@ func (c *AuthorizationCore) AuthSignIn(in *mtproto.TLAuthSignIn) (*mtproto.Auth_
 
 	// 6. check can do action
 	actionType := logic.GetActionType(in)
-	if err = c.svcCtx.Dao.CheckCanDoAction(c.ctx, c.MD.PermAuthKeyId, phoneNumber, actionType); err != nil {
+	if err = c.svcCtx.Dao.CheckCanDoAction(c.ctx, c.MD.PermAuthKeyId, j, actionType); err != nil {
 		c.Logger.Errorf("check can do action - %s: %v", phoneNumber, err)
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (c *AuthorizationCore) AuthSignIn(in *mtproto.TLAuthSignIn) (*mtproto.Auth_
 	// 7. do signIn
 	codeData, err2 := c.svcCtx.AuthLogic.DoAuthSignIn(c.ctx,
 		c.MD.PermAuthKeyId,
-		phoneNumber,
+		j,
 		phoneCode,
 		phoneCodeHash,
 		func(codeData2 *model.PhoneCodeTransaction) error {
@@ -112,7 +112,7 @@ func (c *AuthorizationCore) AuthSignIn(in *mtproto.TLAuthSignIn) (*mtproto.Auth_
 			c.MD.PermAuthKeyId,
 			c.MD.ClientMsgId,
 			c.MD.ClientAddr,
-			in.PhoneNumber,
+			j,
 			logic.GetActionType(in),
 			"auth.signIn")
 	}
@@ -123,10 +123,12 @@ func (c *AuthorizationCore) AuthSignIn(in *mtproto.TLAuthSignIn) (*mtproto.Auth_
 
 		if c.MD.Layer >= 104 {
 			//  not register, next step: auth.singIn
+			c.Logger.Errorf("auth.signIn - not registered, next step auth.signIn")
 			return mtproto.MakeTLAuthAuthorizationSignUpRequired(&mtproto.Auth_Authorization{
 				// TermsOfService: model.MakeTermOfService(),
 				TermsOfService: nil,
 			}).To_Auth_Authorization(), nil
+
 		} else {
 			c.Logger.Errorf("auth.signIn - not registered, next step auth.signIn")
 			c.Logger.Errorf("auth.signIn - not registered, next step auth.signIn, %v", err)
@@ -142,13 +144,13 @@ func (c *AuthorizationCore) AuthSignIn(in *mtproto.TLAuthSignIn) (*mtproto.Auth_
 	)
 
 	user, err = c.svcCtx.Dao.UserClient.UserGetImmutableUserByPhone(c.ctx, &userpb.TLUserGetImmutableUserByPhone{
-		Phone: phoneNumber,
+		Phone: j,
 	})
 	if err != nil {
-		c.Logger.Errorf("user(%s) is err - %v", phoneNumber, err)
+		c.Logger.Errorf("user(%s) is err - %v", j, err)
 		return nil, err
 	} else if user == nil {
-		c.Logger.Errorf("user(%s) is nil", phoneNumber)
+		c.Logger.Errorf("user(%s) is nil", j)
 		err = mtproto.ErrInternalServerError
 		return nil, err
 	}
@@ -172,7 +174,7 @@ func (c *AuthorizationCore) AuthSignIn(in *mtproto.TLAuthSignIn) (*mtproto.Auth_
 
 	selfUser := user.ToSelfUser()
 
-	c.svcCtx.AuthLogic.DeletePhoneCode(c.ctx, c.MD.PermAuthKeyId, in.PhoneNumber, phoneCodeHash)
+	c.svcCtx.AuthLogic.DeletePhoneCode(c.ctx, c.MD.PermAuthKeyId, j, phoneCodeHash)
 
 	region, _ := c.svcCtx.Dao.GetCountryAndRegionByIp(c.MD.ClientAddr)
 
@@ -212,7 +214,7 @@ func (c *AuthorizationCore) AuthSignIn(in *mtproto.TLAuthSignIn) (*mtproto.Auth_
 			PermAuthKeyId: c.MD.PermAuthKeyId,
 			Updates:       mtproto.MakeUpdatesByUpdates(signInN),
 		})
-
+	c.Logger.Errorf("auth.signIn  - not registered, next step auth.signIn")
 	return mtproto.MakeTLAuthAuthorization(&mtproto.Auth_Authorization{
 		SetupPasswordRequired: false,
 		OtherwiseReloginDays:  nil,

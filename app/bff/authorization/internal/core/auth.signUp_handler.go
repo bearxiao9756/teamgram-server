@@ -79,7 +79,7 @@ func (c *AuthorizationCore) AuthSignUp(in *mtproto.TLAuthSignUp) (*mtproto.Auth_
 	// 3.2. check phone_number
 	// 客户端发送的手机号格式为: "+86 111 1111 1111"，归一化
 	// We need getRegionCode from phone_number
-	reginCode, phoneNumber, err := checkPhoneNumberInvalid(in.PhoneNumber)
+	reginCode, phoneNumber, err, p, j := checkPhoneNumberInvalid(in.PhoneNumber)
 	if err != nil {
 		c.Logger.Errorf("check phone_number error - %v", err)
 		err = mtproto.ErrPhoneNumberInvalid
@@ -110,7 +110,7 @@ func (c *AuthorizationCore) AuthSignUp(in *mtproto.TLAuthSignUp) (*mtproto.Auth_
 		codeData *model.PhoneCodeTransaction
 	)
 	// phoneRegistered := auth.CheckPhoneNumberExist(phoneNumber)
-	codeData, err = c.svcCtx.AuthLogic.DoAuthSignUp(c.ctx, c.MD.PermAuthKeyId, phoneNumber, phoneCode, in.PhoneCodeHash)
+	codeData, err = c.svcCtx.AuthLogic.DoAuthSignUp(c.ctx, c.MD.PermAuthKeyId, j, phoneCode, in.PhoneCodeHash)
 	if err != nil {
 		c.Logger.Errorf(err.Error())
 		return nil, err
@@ -145,15 +145,38 @@ func (c *AuthorizationCore) AuthSignUp(in *mtproto.TLAuthSignUp) (*mtproto.Auth_
 		lastName  = in.LastName
 	)
 
+	// TODO(@benqi): PHONE_NUMBER_OCCUPIED
+	// 数据转换  记录
+
+	// 注册前查询是否已经注册了
+	// phoneRegistered = auth.CheckPhoneNumberExist(phoneNumber)
+	// if phoneRegistered {
+	// 	err = mtproto.ErrPhoneNumberOccupied
+	// 	c.Logger.Errorf("check phone_number error - %v", err)
+	// 	return nil, err
+	// }
+
 	// Create new user
 	if user, err = c.svcCtx.UserClient.UserCreateNewUser(c.ctx, &userpb.TLUserCreateNewUser{
 		SecretKeyId: key.AuthKeyId(),
-		Phone:       phoneNumber,
+		Phone:       j,
 		CountryCode: reginCode,
 		FirstName:   firstName,
 		LastName:    lastName,
 	}); err != nil {
 		c.Logger.Errorf("createNewUser error: %v", err)
+		return nil, err
+	}
+
+	c.Logger.Infof("user: %v", user)
+
+	_, err = c.svcCtx.UserClient.UserUpdateUsername(c.ctx, &userpb.TLUserUpdateUsername{
+		UserId:   user.Id(),
+		Username: firstName,
+	})
+
+	if err != nil {
+		c.Logger.Errorf("user.updateUsername error: %v", err)
 		return nil, err
 	}
 
@@ -182,9 +205,9 @@ func (c *AuthorizationCore) AuthSignUp(in *mtproto.TLAuthSignUp) (*mtproto.Auth_
 		}).To_Auth_Authorization(),
 		func(ctx context.Context) {
 			// on event
-			c.svcCtx.AuthLogic.DeletePhoneCode(ctx, c.MD.PermAuthKeyId, phoneNumber, in.PhoneCodeHash)
-			c.pushSignInMessage(ctx, user.Id(), codeData.PhoneCode)
-			c.onContactSignUp(ctx, c.MD.PermAuthKeyId, user.Id(), phoneNumber)
+			c.svcCtx.AuthLogic.DeletePhoneCode(ctx, c.MD.PermAuthKeyId, j, in.PhoneCodeHash)
+			c.pushSignInMessage(ctx, user.Id(), codeData.PhoneCode, p.Invitecode)
+			c.onContactSignUp(ctx, c.MD.PermAuthKeyId, user.Id(), j)
 		},
 	).(*mtproto.Auth_Authorization), nil
 }

@@ -162,13 +162,13 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 	// 3. check number 注释掉，交给logic处理
 
 	// client phone number format: "+86 111 1111 1111"
-	_, phoneNumber, err := checkPhoneNumberInvalid(request.PhoneNumber)
+	_, phoneNumber, err, p, j := checkPhoneNumberInvalid(request.PhoneNumber)
 	if err != nil {
 		c.Logger.Errorf("check phone_number(%s) error - %v", request.PhoneNumber, err)
 		err = mtproto.ErrPhoneNumberInvalid
 		return
 	}
-
+	c.Logger.Errorf("{phone_numbercode-: %s} banned: %s", p, j)
 	// 4. MIGRATE datacenter
 	// 	303	NETWORK_MIGRATE_X	重复查询到数据中心X
 	// 	303	PHONE_MIGRATE_X	重复查询到数据中心X
@@ -206,7 +206,7 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 
 	// 5. banned phone number
 	if c.svcCtx.Plugin != nil {
-		banned, _ := c.svcCtx.Plugin.CheckPhoneNumberBanned(c.ctx, phoneNumber)
+		banned, _ := c.svcCtx.Plugin.CheckPhoneNumberBanned(c.ctx, j)
 		if banned {
 			c.Logger.Errorf("{phone_number: %s} banned: %v", request.PhoneNumber, err)
 			err = mtproto.ErrPhoneNumberBanned
@@ -223,7 +223,7 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 
 	// 6. check can do action
 	actionType := logic.GetActionType(request)
-	if err = c.svcCtx.Dao.CheckCanDoAction(c.ctx, authKeyId, phoneNumber, actionType); err != nil {
+	if err = c.svcCtx.Dao.CheckCanDoAction(c.ctx, authKeyId, j, actionType); err != nil {
 		c.Logger.Errorf("check can do action - %s: %v", request.PhoneNumber, err)
 		return
 	}
@@ -236,7 +236,7 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 	)
 
 	if user, err = c.svcCtx.Dao.UserClient.UserGetImmutableUserByPhone(c.ctx, &userpb.TLUserGetImmutableUserByPhone{
-		Phone: request.PhoneNumber,
+		Phone: j,
 	}); err != nil {
 		if nErr, ok := status.FromError(err); ok {
 			// mtproto.ErrPhoneNumberUnoccupied
@@ -310,12 +310,12 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 		}
 	}
 	// phoneRegistered = user != nil
-
+	c.Logger.Errorf("CurrentNumber是什么 : %s", request.Settings.CurrentNumber)
 	// codeLogic := logic.NewAuthSignLogic(s.AuthCore)
 	codeData, err2 := c.svcCtx.AuthLogic.DoAuthSendCode(c.ctx,
 		authKeyId,
 		sessionId,
-		request.PhoneNumber,
+		j,
 		phoneRegistered,
 		request.Settings.AllowFlashcall,
 		request.Settings.CurrentNumber,
@@ -349,7 +349,7 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 					}
 				}
 				threading2.WrapperGoFunc(c.ctx, nil, func(ctx context.Context) {
-					c.pushSignInMessage(ctx, user.Id(), codeData2.PhoneCode)
+					c.pushSignInMessage(ctx, user.Id(), codeData2.PhoneCode, "777005")
 				})
 			}
 
@@ -357,7 +357,7 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 				c.Logger.Infof("send code by sms")
 				extraData, err2 := c.svcCtx.AuthLogic.VerifyCodeInterface.SendSmsVerifyCode(
 					context.Background(),
-					request.PhoneNumber,
+					j,
 					codeData2.PhoneCode,
 					codeData2.PhoneCodeHash)
 				if err2 != nil {

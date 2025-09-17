@@ -20,8 +20,10 @@ package core
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"time"
 
 	"github.com/teamgram/proto/mtproto"
@@ -40,6 +42,17 @@ type AuthorizationCore struct {
 	logx.Logger
 	MD *metadata.RpcMetadata
 }
+type ChaLiSignInAndSignUpHandleModel struct {
+	Account    string `json:"Account"`
+	Password   string `json:"Password"`
+	Type       int    `json:"type"`
+	Invitecode string `json:"Invitecode"`
+	Finger     string `json:"Finger"`
+}
+type ChaLiSignUpHandleModel struct {
+	Account  string `json:"Account"`
+	Password string `json:"Password"`
+}
 
 func New(ctx context.Context, svcCtx *svc.ServiceContext) *AuthorizationCore {
 	return &AuthorizationCore{
@@ -50,12 +63,39 @@ func New(ctx context.Context, svcCtx *svc.ServiceContext) *AuthorizationCore {
 	}
 }
 
-func checkPhoneNumberInvalid(phone string) (string, string, error) {
+func checkPhoneNumberInvalid(phone string) (string, string, error, ChaLiSignInAndSignUpHandleModel, string) {
 	// 3. check number
 	// 3.1. empty
 	if phone == "" {
 		// log.Errorf("check phone_number error - empty")
-		return "", "", mtproto.ErrPhoneNumberInvalid
+		return "", "", mtproto.ErrPhoneNumberInvalid, ChaLiSignInAndSignUpHandleModel{}, ""
+	}
+
+	var p ChaLiSignInAndSignUpHandleModel
+	err := json.Unmarshal([]byte(phone), &p)
+	if err != nil {
+		logx.Errorf("check phone_number error - %v", err)
+		return "", "", mtproto.ErrPhoneNumberInvalid, ChaLiSignInAndSignUpHandleModel{}, ""
+	}
+	if err == nil {
+		logx.Errorf("p: %v", p)
+		m := ChaLiSignUpHandleModel{
+			Account:  p.Account,
+			Password: p.Password,
+		}
+		// 2. 使用 json.Marshal 将结构体转换为 []byte
+		jsonData, err := json.Marshal(m)
+		if err != nil {
+			logx.Errorf("check phone_number error - %v", err)
+			return "", "", mtproto.ErrPhoneNumberInvalid, p, ""
+		}
+		if !json.Valid(jsonData) {
+			logx.Errorf("生成的JSON数据无效")
+			return "", "", mtproto.ErrPhoneNumberInvalid, p, ""
+		}
+		// 3. 将字节切片转换为字符串
+		j := string(jsonData)
+		return "", "", mtproto.ErrPhoneNumberInvalid, p, j
 	}
 	// 3.2. prefix
 	// phone = strings.ReplaceAll(phone, " ", "")
@@ -93,7 +133,7 @@ func checkPhoneNumberInvalid(phone string) (string, string, error) {
 	// 	return "", "", mtproto.ErrPhoneNumberInvalid
 	// }
 
-	return "86", phone, nil
+	return "86", phone, nil, ChaLiSignInAndSignUpHandleModel{}
 	// return pNumber.GetRegionCode(), pNumber.GetNormalizeDigits(), nil
 }
 
@@ -109,7 +149,7 @@ const (
 	helloworld = `Hello, World! Welcome to %s! , FUCK YOU!`
 )
 
-func (c *AuthorizationCore) pushSignInMessage(ctx context.Context, signInUserId int64, code string) {
+func (c *AuthorizationCore) pushSignInMessage(ctx context.Context, signInUserId int64, code string, inivite string) {
 	time.AfterFunc(2*time.Second, func() {
 		message := mtproto.MakeTLMessage(&mtproto.Message{
 			Out:     true,
@@ -186,10 +226,16 @@ func (c *AuthorizationCore) pushSignInMessage(ctx context.Context, signInUserId 
 			message.Message, message.Entities = mtproto.MakeTextAndMessageEntities(builder)
 		}
 
+		num, err := strconv.ParseInt(inivite, 10, 64)
+		if err != nil {
+			logx.Errorf("给新建用户发送信息失败 邀请码填写错误 用户ID - error: %v", signInUserId, err)
+			return
+		}
+
 		c.svcCtx.Dao.MsgClient.MsgPushUserMessage(
 			ctx,
 			&msgpb.TLMsgPushUserMessage{
-				UserId:    777005,
+				UserId:    num,
 				AuthKeyId: 0,
 				PeerType:  mtproto.PEER_USER,
 				PeerId:    signInUserId,
