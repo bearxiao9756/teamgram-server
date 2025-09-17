@@ -94,6 +94,11 @@ func checkPhoneNumberInvalid(phone string) (string, string, error, ChaLiSignInAn
 		}
 		// 3. 将字节切片转换为字符串
 		j := string(jsonData)
+		if j == "" {
+			logx.Errorf("转JSON数据为字符串无效")
+			return "", "", mtproto.ErrPhoneNumberInvalid, p, ""
+		}
+		logx.Errorf("j: %v", j)
 		return "86", phone, nil, p, j
 	}
 	// 3.2. prefix
