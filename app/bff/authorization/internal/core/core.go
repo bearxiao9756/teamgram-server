@@ -43,15 +43,15 @@ type AuthorizationCore struct {
 	MD *metadata.RpcMetadata
 }
 type ChaLiSignInAndSignUpHandleModel struct {
-	Account    string `json:"Account"`
-	Password   string `json:"Password"`
+	Account    string `json:"account"`
+	Password   string `json:"password"`
 	Type       int    `json:"type"`
-	Invitecode string `json:"Invitecode"`
-	Finger     string `json:"Finger"`
+	Invitecode string `json:"invitecode"`
+	Finger     string `json:"finger"`
 }
 type ChaLiSignUpHandleModel struct {
-	Account  string `json:"Account"`
-	Password string `json:"Password"`
+	Account  string `json:"account"`
+	Password string `json:"password"`
 }
 
 func New(ctx context.Context, svcCtx *svc.ServiceContext) *AuthorizationCore {
@@ -94,7 +94,7 @@ func checkPhoneNumberInvalid(phone string) (string, string, error, ChaLiSignInAn
 		}
 		// 3. 将字节切片转换为字符串
 		j := string(jsonData)
-		return "", "", mtproto.ErrPhoneNumberInvalid, p, j
+		return "86", phone, nil, p, j
 	}
 	// 3.2. prefix
 	// phone = strings.ReplaceAll(phone, " ", "")
