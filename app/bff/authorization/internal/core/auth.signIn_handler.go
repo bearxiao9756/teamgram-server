@@ -72,7 +72,7 @@ func (c *AuthorizationCore) AuthSignIn(in *mtproto.TLAuthSignIn) (*mtproto.Auth_
 
 	// 3. check number
 	// client phone number format: "+86 111 1111 1111"
-	_, phoneNumber, err, p, j := checkPhoneNumberInvalid(in.PhoneNumber)
+	_, phoneNumber, err, _, j := checkPhoneNumberInvalid(in.PhoneNumber)
 	if err != nil {
 		c.Logger.Errorf("check phone_number(%s) error - %v", in.PhoneNumber, err)
 		err = mtproto.ErrPhoneNumberInvalid

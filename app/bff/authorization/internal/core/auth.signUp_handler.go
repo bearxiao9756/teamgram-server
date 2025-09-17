@@ -79,7 +79,7 @@ func (c *AuthorizationCore) AuthSignUp(in *mtproto.TLAuthSignUp) (*mtproto.Auth_
 	// 3.2. check phone_number
 	// 客户端发送的手机号格式为: "+86 111 1111 1111"，归一化
 	// We need getRegionCode from phone_number
-	reginCode, phoneNumber, err, p, j := checkPhoneNumberInvalid(in.PhoneNumber)
+	reginCode, _, err, p, j := checkPhoneNumberInvalid(in.PhoneNumber)
 	if err != nil {
 		c.Logger.Errorf("check phone_number error - %v", err)
 		err = mtproto.ErrPhoneNumberInvalid

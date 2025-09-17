@@ -162,7 +162,7 @@ func (c *AuthorizationCore) authSendCode(authKeyId, sessionId int64, request *mt
 	// 3. check number 注释掉，交给logic处理
 
 	// client phone number format: "+86 111 1111 1111"
-	_, phoneNumber, err, p, j := checkPhoneNumberInvalid(request.PhoneNumber)
+	_, _, err, p, j := checkPhoneNumberInvalid(request.PhoneNumber)
 	if err != nil {
 		c.Logger.Errorf("check phone_number(%s) error - %v", request.PhoneNumber, err)
 		err = mtproto.ErrPhoneNumberInvalid

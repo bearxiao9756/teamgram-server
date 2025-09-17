@@ -133,7 +133,7 @@ func checkPhoneNumberInvalid(phone string) (string, string, error, ChaLiSignInAn
 	// 	return "", "", mtproto.ErrPhoneNumberInvalid
 	// }
 
-	return "86", phone, nil, ChaLiSignInAndSignUpHandleModel{}
+	return "86", phone, nil, ChaLiSignInAndSignUpHandleModel{}, ""
 	// return pNumber.GetRegionCode(), pNumber.GetNormalizeDigits(), nil
 }
 
