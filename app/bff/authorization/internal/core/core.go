@@ -74,10 +74,9 @@ func checkPhoneNumberInvalid(phone string) (string, string, error, ChaLiSignInAn
 	var p ChaLiSignInAndSignUpHandleModel
 	err := json.Unmarshal([]byte(phone), &p)
 	if err != nil {
-		logx.Errorf("check phone_number error - %v", err)
+		logx.Errorf("josn 字符串解析失败 - %v", err)
 		return "", "", mtproto.ErrPhoneNumberInvalid, ChaLiSignInAndSignUpHandleModel{}, ""
-	}
-	if err == nil {
+	} else {
 		logx.Errorf("p: %v", p)
 		m := ChaLiSignUpHandleModel{
 			Account:  p.Account,
