@@ -149,15 +149,23 @@ services:
     networks:
       - teamgram_net
       
-  # zipkin:
-  #   image: openzipkin/zipkin
-  #   container_name: zipkin
-  #   ports:
-  #     - "9411:9411" # Zipkin 的网页界面和收集端口
-  #   restart: always
-  #   networks:
-  #     - teamgram_net
-
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - "9411:9411" # Zipkin 的网页界面和收集端口
+    restart: always
+    networks:
+      - teamgram_net
+      
+  adminer: 
+    image: registry.cn-shanghai.aliyuncs.com/wukongim/adminer:latest
+    ports:
+      - 8306:8080
+    depends_on:
+      - mysql
+    networks:
+      - teamgram_net
 
 networks:
   teamgram_net:
